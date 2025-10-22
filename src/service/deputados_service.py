@@ -30,4 +30,3 @@ def get_deputados_id(deputado_id: int):
 
 
 
-print(get_deputados())

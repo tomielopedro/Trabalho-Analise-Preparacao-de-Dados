@@ -3,14 +3,23 @@ from utils.utils import *
 
 partidos_tab, deputados_tab = st.tabs(['Lista de Partidos', 'Lista de Deputados'])
 
+
 @st.fragment
 def informacoes_partido_button(partido):
     if st.button('Informações', key=f'button_{partido.nome}'):
-        st.session_state['selected_partido'] = partido
-        st.switch_page('pagina_partido')
+        st.session_state['selected_partido'] = partido_with_membros(partido)
+        st.switch_page('pages/pagina_partido.py')
+
+
+@st.fragment
+def informacoes_deputado_button(deputado):
+    if st.button('Informações', key=f'button_{deputado.nome}'):
+        st.session_state['selected_deputado'] = deputado_by_id(deputado.id)
+        st.switch_page('pages/pagina_deputado.py')
+
 
 with partidos_tab:
-    partidos = all_partidos_detailed()
+    partidos = st.session_state['partidos']
     for partido in partidos:
         with st.container(border=True, key=f'container_{partido.nome}'):
             col1, col2 = st.columns([0.5, 2])
@@ -30,8 +39,9 @@ with partidos_tab:
 
             informacoes_partido_button(partido)
 
+
 with deputados_tab:
-    deputados = all_deputados()
+    deputados = st.session_state['deputados']
 
     for deputado in deputados:
         with st.container(border=True, key=f'container_{deputado.nome}'):
@@ -39,6 +49,8 @@ with deputados_tab:
             col1.image(deputado.url_foto, width=100)
             col2.write(f'### Deputado: {deputado.nome}')
             col2.write(f'Partido: {deputado.sigla_partido.title()} | UF: {deputado.sigla_uf}')
+
+            informacoes_deputado_button(deputado)
 
 
 

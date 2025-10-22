@@ -9,8 +9,8 @@ def all_deputados() -> list[Deputado]:
     return [Deputado.from_dict(d) for d in deputados]
 
 
-def deputado_by_id(deputado_id: int) -> Deputado:
-    deputado = get_deputados_id(id)
+def deputado_by_id(deputado_id: int) -> DeputadoDetalhado:
+    deputado = get_deputados_id(deputado_id)
     return DeputadoDetalhado.from_dict(deputado)
 
 
@@ -34,5 +34,11 @@ def all_partidos_detailed() -> list[Partido]:
 
 def partidos_membros(partido_id: int) -> list[Membro]:
     membros = get_partidos_membros(partido_id)
-    return Partido.from_dict(membros)
+    return [Membro.from_dict(m) for m in membros]
 
+
+def partido_with_membros(partido: Partido) -> Partido:
+    membros = partidos_membros(partido.id)
+    print(membros)
+    partido.membros = membros
+    return partido
