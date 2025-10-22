@@ -146,3 +146,47 @@ class DeputadoDetalhado:
             municipio_nascimento=data.get("municipioNascimento"),
             escolaridade=data.get("escolaridade")
         )
+
+from dataclasses import dataclass
+
+@dataclass
+class Despesa:
+    ano: int
+    mes: int
+    tipo_despesa: str
+    cod_documento: int
+    tipo_documento: str
+    cod_tipo_documento: int
+    data_documento: str
+    num_documento: str
+    valor_documento: float
+    url_documento: str
+    nome_fornecedor: str
+    cnpj_cpf_fornecedor: str
+    valor_liquido: float
+    valor_glosa: float
+    num_ressarcimento: str
+    cod_lote: int
+    parcela: int
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            ano=data.get("ano"),
+            mes=data.get("mes"),
+            tipo_despesa=data.get("tipoDespesa"),
+            cod_documento=data.get("codDocumento"),
+            tipo_documento=data.get("tipoDocumento"),
+            cod_tipo_documento=data.get("codTipoDocumento"),
+            data_documento=data.get("dataDocumento"),
+            num_documento=data.get("numDocumento"),
+            valor_documento=data.get("valorDocumento"),
+            url_documento=data.get("urlDocumento"),
+            nome_fornecedor=data.get("nomeFornecedor"),
+            cnpj_cpf_fornecedor=data.get("cnpjCpfFornecedor"),
+            valor_liquido=data.get("valorLiquido"),
+            valor_glosa=data.get("valorGlosa"),
+            num_ressarcimento=data.get("numRessarcimento"),
+            cod_lote=data.get("codLote"),
+            parcela=data.get("parcela"),
+        )

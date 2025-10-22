@@ -1,8 +1,9 @@
-from service.partidos_service import get_partidos, get_partidos_membros, get_partidos_by_id
-from service.deputados_service import get_deputados, get_deputados_id
-from models.deputados_models import Deputado, DeputadoDetalhado
-from models.partidos_models import Membro, Partido
+from service.partidos_service import *
+from service.deputados_service import *
+from models.deputados_models import *
+from models.partidos_models import *
 
+# === DEPUTADOS
 
 def all_deputados() -> list[Deputado]:
     deputados = get_deputados()
@@ -13,6 +14,17 @@ def deputado_by_id(deputado_id: int) -> DeputadoDetalhado:
     deputado = get_deputados_id(deputado_id)
     return DeputadoDetalhado.from_dict(deputado)
 
+
+def deputado_despesas(deputado_id: int) -> Despesa:
+    despesas = get_deputado_despesa(deputado_id)
+    return [Despesa.from_dict(d) for d in despesas]
+
+
+def deputado_hitorico(deputado_id: int):
+    historico = get_deputado_historico(deputado_id)
+    return historico
+
+# === PARTIDOS ===
 
 def all_partidos() -> list[Partido]:
     partidos = get_partidos()
