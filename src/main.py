@@ -10,13 +10,13 @@ if 'selected_deputado' not in st.session_state:
 st.session_state['pagina_partido'] = st.Page("pages/pagina_partido.py", title="Pagina Inicial"),
 
 
-@st.cache_data
-def get_data():
-    if 'deputados' not in st.session_state:
-        st.session_state['deputados'] = all_deputados()
+#@st.cache_data
 
-    if 'partidos' not in st.session_state:
-        st.session_state['partidos'] = all_partidos_detailed()
+if 'deputados' not in st.session_state:
+    st.session_state['deputados'] = all_deputados()
+
+if 'partidos' not in st.session_state:
+    st.session_state['partidos'] = all_partidos_detailed()
 
 
 pages = {
@@ -27,6 +27,6 @@ pages = {
     ]
 }
 
-get_data()
+
 pg = st.navigation(pages)
 pg.run()
