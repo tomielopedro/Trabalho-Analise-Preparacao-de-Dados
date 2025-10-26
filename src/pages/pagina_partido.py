@@ -1,13 +1,14 @@
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import datetime
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils.utils import get_deputado_despesa, get_deputados_id
-from concurrent.futures import ThreadPoolExecutor
 
 from pages.pagina_inicial import informacoes_deputado_button
+from utils.utils import (get_deputado_despesa, get_deputado_historico,
+                         get_deputados_id)
 
 
 def _buscar_gastos(deputado):
@@ -60,23 +61,43 @@ with info_partido:
     with col1:
         st.image(lider["url_foto"], width=120)
     with col2:
-        st.write(f"### **Nome:** {lider['nome']}")
+        st.write(f"### {lider['nome']}")
         st.write(f"**UF:** {lider['uf']}")
         # informacoes_deputado_button(lider)
     st.divider()
 
 with deputados_partido:
-    for deputado in partido.membros:
-        with st.container(border=True, key=f'container_{deputado.nome}'):
-            col1, col2 = st.columns([0.5, 2])
-            col1.image(deputado.url_foto, width=100)
-            col2.write(f'### {deputado.nome}')
-            col2.write(f'UF: {deputado.sigla_uf}')
-            informacoes_deputado_button(deputado)
+    search_name = st.text_input(
+        "Buscar deputado por nome:", 
+        placeholder="Digite o nome para filtrar...",
+        key=f'search_{partido.sigla}' 
+    )
+
+    if search_name:
+        membros_filtrados = [
+            deputado for deputado in partido.membros 
+            if deputado.nome.lower().startswith(search_name.lower())
+        ]
+    else:
+        membros_filtrados = partido.membros
+
+    if membros_filtrados:
+        for deputado in membros_filtrados:
+            with st.container(border=True, key=f'container_{deputado.nome}'):
+                col1, col2 = st.columns([0.5, 2])
+                col1.image(deputado.url_foto, width=100)
+                col2.write(f'### {deputado.nome}')
+                col2.write(f'**UF**: {deputado.sigla_uf}')
+                informacoes_deputado_button(deputado)
+    elif search_name:
+        st.error("Nenhum deputado encontrado com esse nome.")
+    else:
+        st.info("Este partido não possui membros na lista.")
 
 with gastos_partido:
     valor_total = st.session_state['gastos_partido']["valorLiquido"].sum()
-    st.write(f'## Valor Total: R${valor_total:,.2f}')
+    valor_total_str = f'{valor_total:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    st.write(f'## Valor Total: R${valor_total_str}')
     st.divider()
 
     # GASTOS POR TIPO - GRÁFICO DE PIZZA
@@ -154,7 +175,6 @@ with gastos_partido:
     )
     st.plotly_chart(fig4, use_container_width=True)
     st.divider()
-
 
 with prospostas_partido:
     st.write('Em construção')
