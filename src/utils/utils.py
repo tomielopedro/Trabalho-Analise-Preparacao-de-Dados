@@ -24,6 +24,18 @@ def deputado_hitorico(deputado_id: int):
     historico = get_deputado_historico(deputado_id)
     return historico
 
+def tratar_data_historico(deputado_id: int):
+    """
+    Retorna uma lista com os anos únicos encontrados no histórico do deputado.
+    """
+    historico = get_deputado_historico(deputado_id)  # deve retornar uma lista de dicionários
+    if not historico or not isinstance(historico, list):
+        return []
+    anos = [item["dataHora"][:7].replace("-", "/") for item in historico if "dataHora" in item and item["dataHora"]]
+    return sorted(anos, reverse=True)
+
+
+
 # === PARTIDOS ===
 
 def all_partidos() -> list[Partido]:
