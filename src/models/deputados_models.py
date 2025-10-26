@@ -61,7 +61,7 @@ class UltimoStatus:
             gabinete=gabinete,
             situacao=data.get("situacao"),
             condicao_eleitoral=data.get("condicaoEleitoral"),
-            descricao_status=data.get("descricaoStatus")
+            descricao_status=data.get("descricaoStatus"),
         )
 
 
@@ -128,6 +128,7 @@ class DeputadoDetalhado:
             else:
                 data = dados
 
+
         ultimo_status_data = data.get("ultimoStatus")
         ultimo_status = UltimoStatus.from_dict(ultimo_status_data) if ultimo_status_data else None
 
@@ -190,3 +191,4 @@ class Despesa:
             cod_lote=data.get("codLote"),
             parcela=data.get("parcela"),
         )
+
