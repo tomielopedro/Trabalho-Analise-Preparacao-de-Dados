@@ -4,9 +4,9 @@ from dataclasses import asdict
 from utils.utils import deputado_despesas, deputado_hitorico, tratar_data_historico
 import pandas as pd
 from collections import defaultdict
+from datetime import datetime
 
 # === CONFIG ===
-
 deputado = st.session_state['selected_deputado']
 if deputado:
     # === DEPUTADO ===
@@ -20,7 +20,23 @@ if deputado:
         # Info Basica do Deputado
         st.write(f'## {deputado.nome}')
         st.write(f"### Partido ***{deputado.ultimo_status.sigla_partido}***")
-        st.write(f"### Estado: *EM CONSTRUÇÃO*")
+        st.write(f"### Estado {deputado.ultimo_status.sigla_uf}")
+
+        # Redes Sociais !!!!!!
+        with st.container(border=False, key='container_redes'):
+                html = "<div style='text-align:left;'>"
+                for redes in deputado.rede_social:
+                    if 'twitter' in redes:
+                        html += f"🐦 <a href='{redes}' target='_blank'>Twitter</a> &nbsp;&nbsp;"
+                    elif 'facebook' in redes:
+                        html += f"📘 <a href='{redes}' target='_blank'>Facebook</a> &nbsp;&nbsp;"
+                    elif 'instagram' in redes:
+                        html += f"📷 <a href='{redes}' target='_blank'>Instagram</a> &nbsp;&nbsp;"
+                    elif 'youtube' in redes:
+                        html += f"▶️ <a href='{redes}' target='_blank'>YouTube</a> &nbsp;&nbsp;"
+                html += "</div>"
+
+                st.markdown(html, unsafe_allow_html=True)
 
     # Tabs para Seleção
     tabs = ['Informações', 'Histórioco', 'Eventos', 'Propostas', 'Despesas']
@@ -31,39 +47,33 @@ if deputado:
     # === INFORMAÇÃOES BASICAS ===
     with info_deputado:
 
-        tabs_info = ['Geral', 'Dados Pessoais']
-        info_Geral, info_Pessoal = st.tabs(tabs_info)
+        # Dados Politicos
+        with st.container(border=True, key='container_Dados'):
+            st.markdown(f"### Dados Politicos")
+            st.markdown(f"Id do Deputado: ***{deputado.ultimo_status.id}***")
+            st.markdown(f"Situação Eleitoral ***{deputado.ultimo_status.situacao}***")
+            st.markdown(f"Condição ***{deputado.ultimo_status.condicao_eleitoral}***")
+            st.markdown(f"Id da Legislatura: ***{deputado.ultimo_status.id_legislatura}***")
 
-        with info_Geral:
+         # Gabinete
+        with st.container(border=True, key='container_Gabinete'):
+            st.markdown(f"### Gabinete")
+            st.write(f"Gabinete do Deputado: {deputado.ultimo_status.gabinete.nome}°")
+            st.write(f"Predio: {deputado.ultimo_status.gabinete.predio}°")
+            # Contato
+            st.markdown(f"Telefone para Contato: ***{deputado.ultimo_status.gabinete.telefone}***")
+            st.markdown(f"Email para Contato: *{deputado.ultimo_status.gabinete.email}*")
 
-            st.write(f"Id do Deputado: {deputado.ultimo_status.id}")
-            st.write(f"Id da Legislatura: {deputado.ultimo_status.id_legislatura}")
+        # Dados Pessoais
+        with st.container(border=True, key='container_Dados_Pessoais'):
+            st.markdown(f"### Dados Pessoais")
+            st.markdown(f"CPF: ***{deputado.cpf}***")
+            st.markdown(f"Nivel de Escolaridade: **{deputado.escolaridade}**")
+            st.markdown(f"Estado de Nascimento: {deputado.uf_nascimento}")
+            st.markdown(f"Municipio de Nascimento: **{deputado.municipio_nascimento}**")
+            st.markdown(f"Data de Nascimento: {datetime.strptime(deputado.data_nascimento, '%Y-%m-%d').strftime('%d/%m/%Y')}")
 
-            st.write(f"Gabinete do Deputado: {deputado.ultimo_status.gabinete.nome}")
-            st.write(f"Email para contato: {deputado.ultimo_status.gabinete.email}")
-            st.write(f"Telefone para contato: {deputado.ultimo_status.gabinete.telefone}")
 
-
-            st.write(f"Escolaridade: {deputado.escolaridade}")
-
-
-        # Redes Sociais !!!!!!
-            with st.container(border=True, key=f'container_redes'):
-                for redes in deputado.rede_social:
-                    if 'twitter' in redes:
-                        st.markdown(f"[Twitter]({redes})")
-                    elif 'facebook' in redes:
-                        st.markdown(f"[Facebook]({redes})")
-                    elif 'instagram' in redes:
-                        st.markdown(f"[Instagram]({redes})")
-                    elif 'youtube' in redes:
-                        st.markdown(f"[Youtube]({redes})")
-
-        with info_Pessoal:
-            st.write(f"Data de Nascimento: {deputado.data_nascimento}")
-            st.write(f"Estado de Nascimento: {deputado.uf_nascimento}")
-
-            st.write(asdict(deputado))
 
     # === HISTÓRICO ===
     with historico_deputado:
@@ -162,4 +172,4 @@ if deputado:
                             st.write(f"Cod do Lot. **{des.cod_lote}**")
                             st.write(f"A compra foi feita em  *{des.parcela}* vezes.")
 else:
-    st.warning('Nenhum deputado selecionado')
+    st.warning('Nenhum deputado encontrado')
