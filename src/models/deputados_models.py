@@ -192,3 +192,89 @@ class Despesa:
             parcela=data.get("parcela"),
         )
 
+from dataclasses import dataclass
+from typing import List, Optional
+
+
+@dataclass
+class Orgao:
+    id: int
+    uri: str
+    sigla: str
+    nome: str
+    apelido: Optional[str]
+    codTipoOrgao: Optional[int]
+    tipoOrgao: Optional[str]
+    nomePublicacao: Optional[str]
+    nomeResumido: Optional[str]
+
+    @staticmethod
+    def from_dict(data: dict) -> "Orgao":
+        return Orgao(
+            id=data.get("id"),
+            uri=data.get("uri"),
+            sigla=data.get("sigla"),
+            nome=data.get("nome"),
+            apelido=data.get("apelido"),
+            codTipoOrgao=data.get("codTipoOrgao"),
+            tipoOrgao=data.get("tipoOrgao"),
+            nomePublicacao=data.get("nomePublicacao"),
+            nomeResumido=data.get("nomeResumido"),
+        )
+
+
+@dataclass
+class LocalCamara:
+    nome: str
+    predio: Optional[str]
+    sala: Optional[str]
+    andar: Optional[str]
+
+    @staticmethod
+    def from_dict(data: dict) -> "LocalCamara":
+        return LocalCamara(
+            nome=data.get("nome"),
+            predio=data.get("predio"),
+            sala=data.get("sala"),
+            andar=data.get("andar"),
+        )
+
+
+@dataclass
+class Evento:
+    id: int
+    uri: str
+    dataHoraInicio: str
+    dataHoraFim: str
+    situacao: str
+    descricaoTipo: str
+    descricao: str
+    localExterno: Optional[str]
+    orgaos: List[Orgao]
+    localCamara: Optional[LocalCamara]
+    urlRegistro: Optional[str]
+
+    @staticmethod
+    def from_dict(data: dict) -> "Evento":
+        orgaos = [Orgao.from_dict(o) for o in data.get("orgaos", [])]
+
+        local_camara_data = data.get("localCamara")
+        local_camara = (
+            LocalCamara.from_dict(local_camara_data)
+            if local_camara_data
+            else None
+        )
+
+        return Evento(
+            id=data.get("id"),
+            uri=data.get("uri"),
+            dataHoraInicio=data.get("dataHoraInicio"),
+            dataHoraFim=data.get("dataHoraFim"),
+            situacao=data.get("situacao"),
+            descricaoTipo=data.get("descricaoTipo"),
+            descricao=data.get("descricao"),
+            localExterno=data.get("localExterno"),
+            orgaos=orgaos,
+            localCamara=local_camara,
+            urlRegistro=data.get("urlRegistro"),
+        )

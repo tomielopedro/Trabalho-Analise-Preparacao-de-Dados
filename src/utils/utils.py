@@ -63,6 +63,10 @@ def partidos_membros(partido_id: int) -> list[Membro]:
 
 def partido_with_membros(partido: Partido) -> Partido:
     membros = partidos_membros(partido.id)
-    print(membros)
     partido.membros = membros
     return partido
+
+
+def deputados_eventos(deputado_id: int):
+    eventos = get_deputados_eventos(deputado_id)
+    return [Evento.from_dict(evento) for evento in eventos]

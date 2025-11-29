@@ -45,3 +45,16 @@ def get_deputado_historico(deputado_id: int):
     else:
         print(f"Erro na requisição: {response.status_code}")
         return []
+
+
+def get_deputados_eventos(deputado_id:int):
+    deputados = f'{ENDPOINT}deputados/{deputado_id}/eventos'
+    response = requests.get(deputados)
+    if response.status_code == 200:
+        return response.json()['dados']
+    else:
+        print(f"Erro na requisição: {response.status_code}")
+        return []
+
+if __name__ == '__main__':
+    print(get_deputados_eventos(91228))

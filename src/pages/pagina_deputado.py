@@ -1,7 +1,7 @@
 # === BIBLIOTECAS ===
 import streamlit as st
 from dataclasses import asdict
-from utils.utils import deputado_despesas, deputado_hitorico, tratar_data_historico
+from utils.utils import deputado_despesas, deputado_hitorico, tratar_data_historico, deputados_eventos
 import pandas as pd
 from collections import defaultdict
 from datetime import datetime
@@ -93,7 +93,8 @@ if deputado:
 
     # === EVENTOS ===
     with eventos_deputado:
-        st.write('Em construção')
+        st.write(deputados_eventos(deputado.id))
+
 
 
 
