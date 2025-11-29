@@ -2,12 +2,8 @@ import streamlit as st
 import math
 from utils.utils import Deputados, Partidos
 
-# Inicializa as classes
 DEPUTADOS, PARTIDOS = Deputados(), Partidos()
 
-# ==========================================
-# 1. ESTILO CSS (Padrão Profissional)
-# ==========================================
 st.markdown("""
     <style>
     /* Card Geral com Sombra e Hover */
@@ -62,10 +58,6 @@ st.markdown("---")
 partidos_tab, deputados_tab = st.tabs(['🏢 Partidos Políticos', '👔 Deputados Federais'])
 
 
-# ==========================================
-# 2. FUNÇÕES DE NAVEGAÇÃO
-# ==========================================
-
 def ir_para_partido(partido):
     st.session_state['selected_partido'] = PARTIDOS.enrich_with_membros(partido)
     st.switch_page('pages/pagina_partido.py')
@@ -84,10 +76,8 @@ with partidos_tab:
     with col_search:
         busca_partido = st.text_input("🔍 Filtrar Partidos", placeholder="Digite a sigla ou nome (ex: PL, PT)...")
 
-    # Recupera dados
     partidos = st.session_state.get('partidos', [])
 
-    # Lógica de Filtro
     if busca_partido:
         partidos_filtrados = [
             p for p in partidos
@@ -96,7 +86,7 @@ with partidos_tab:
     else:
         partidos_filtrados = partidos
 
-    # Stats rápidos
+
     with col_stats:
         st.metric("Total de Partidos", len(partidos_filtrados))
 
@@ -104,7 +94,7 @@ with partidos_tab:
         st.warning("Nenhum partido encontrado com este critério.")
     else:
         st.markdown("<br>", unsafe_allow_html=True)
-        # Grid System
+
         cols_per_row = 3
         rows = [partidos_filtrados[i:i + cols_per_row] for i in range(0, len(partidos_filtrados), cols_per_row)]
 
@@ -112,7 +102,6 @@ with partidos_tab:
             cols = st.columns(cols_per_row)
             for idx, partido in enumerate(row):
                 with cols[idx]:
-                    # Card Container sem altura fixa (deixa o conteúdo ditar)
                     with st.container(border=True):
                         c_img, c_info = st.columns([1, 2])
 
@@ -134,13 +123,9 @@ with partidos_tab:
                         if st.button('Ver Detalhes', key=f'btn_part_{partido.id}', use_container_width=True):
                             ir_para_partido(partido)
 
-# ==========================================
-# 4. TAB: DEPUTADOS
-# ==========================================
 with deputados_tab:
     deputados = st.session_state.get('deputados', [])
 
-    # --- BARRA DE FILTROS (Estilo Card) ---
     with st.container(border=True):
         st.markdown("#### 🔎 Filtros de Pesquisa")
         c1, c2, c3 = st.columns([3, 1.5, 1.5])
@@ -154,7 +139,6 @@ with deputados_tab:
             lista_ufs = sorted(list(set([d.sigla_uf for d in deputados if d.sigla_uf])))
             filtro_uf = st.selectbox("Filtrar por UF", ["Todos"] + lista_ufs)
 
-    # Lógica de Filtragem
     deputados_filtrados = deputados
     if busca_nome:
         deputados_filtrados = [d for d in deputados_filtrados if busca_nome.lower() in d.nome.lower()]
@@ -163,9 +147,8 @@ with deputados_tab:
     if filtro_uf != "Todos":
         deputados_filtrados = [d for d in deputados_filtrados if d.sigla_uf == filtro_uf]
 
-    # --- PAGINAÇÃO ---
     st.divider()
-    items_por_pagina = 24  # Múltiplo de 4 para a grade ficar bonita
+    items_por_pagina = 24
     total_items = len(deputados_filtrados)
     total_paginas = math.ceil(total_items / items_por_pagina)
 
@@ -188,11 +171,11 @@ with deputados_tab:
     fim = inicio + items_por_pagina
     lote_atual = deputados_filtrados[inicio:fim]
 
-    # --- GRID DE DEPUTADOS ---
+
     if not lote_atual:
         st.info("🚫 Nenhum deputado encontrado com os filtros selecionados.")
     else:
-        # Grid System Manual (4 colunas)
+
         cols_per_row = 4
         rows = [lote_atual[i:i + cols_per_row] for i in range(0, len(lote_atual), cols_per_row)]
 
@@ -200,21 +183,17 @@ with deputados_tab:
             cols = st.columns(cols_per_row)
             for idx, deputado in enumerate(row):
                 with cols[idx]:
-                    # Card
+
                     with st.container(border=True):
-                        # Cabeçalho do Card (Foto e Status)
                         c_foto, c_status = st.columns([1, 2])
 
-                        # Exibição Condicional de Foto
                         if deputado.url_foto:
                             st.image(deputado.url_foto, use_container_width=True)
                         else:
                             st.image("https://via.placeholder.com/150?text=Foto", use_container_width=True)
 
-                        # Nome e Partido
                         st.markdown(f"**{deputado.nome}**")
 
-                        # Badges HTML
                         html_badges = f"""
                         <div style='margin-bottom:10px;'>
                             <span class='badge-partido'>{deputado.sigla_partido}</span>
@@ -223,6 +202,5 @@ with deputados_tab:
                         """
                         st.markdown(html_badges, unsafe_allow_html=True)
 
-                        # Botão Full Width
                         if st.button("Ver Perfil", key=f"btn_d_{deputado.id}", use_container_width=True):
                             ir_para_deputado(deputado)
