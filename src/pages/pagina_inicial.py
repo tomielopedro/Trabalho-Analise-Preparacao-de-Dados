@@ -1,50 +1,90 @@
 import streamlit as st
 import math
-from utils.utils import Deputados, Partidos  # Certifique-se que suas funções de carga (partido_with_membros, etc) estão aqui
+from utils.utils import Deputados, Partidos
 
+# Inicializa as classes
 DEPUTADOS, PARTIDOS = Deputados(), Partidos()
-# === ESTILO CSS ===
+
+# ==========================================
+# 1. ESTILO CSS (Padrão Profissional)
+# ==========================================
 st.markdown("""
     <style>
-    div[data-testid="stContainer"] {
-        transition: transform 0.2s;
+    /* Card Geral com Sombra e Hover */
+    .st-emotion-cache-1r6slb0, .st-emotion-cache-12w0qpk { /* Classes containers do Streamlit */
+        transition: transform 0.2s, box-shadow 0.2s;
     }
-    div[data-testid="stContainer"]:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+    /* Estilo Customizado para nossos Cards */
+    div[data-testid="stVerticalBlock"] > div[style*="border"] {
+        background-color: white;
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.2s ease-in-out;
     }
-    .stButton button {
-        width: 100%;
-        border-radius: 20px;
+    div[data-testid="stVerticalBlock"] > div[style*="border"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        border-color: #007bff;
     }
+
+    /* Títulos e Textos */
+    h3, h4, h5 { color: #2c3e50; margin-bottom: 5px; }
+    p { color: #666; font-size: 0.9rem; }
+
+    /* Badges (Etiquetas) */
+    .badge-partido {
+        background-color: #007bff; color: white; 
+        padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;
+    }
+    .badge-uf {
+        background-color: #e9ecef; color: #495057; 
+        padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #dee2e6;
+    }
+    .badge-membros {
+        background-color: #d4edda; color: #155724;
+        padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;
+    }
+
+    /* Imagens */
+    img { border-radius: 8px; }
+
+    /* Paginação */
+    div[data-testid="stNumberInput"] label { display: none; }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗂️ Visão Geral")
+st.title("🗂️ Visão Geral Parlamentar")
+st.markdown("Explore as bancadas partidárias e a lista completa de deputados em exercício.")
+st.markdown("---")
+
 partidos_tab, deputados_tab = st.tabs(['🏢 Partidos Políticos', '👔 Deputados Federais'])
 
 
-# === FUNÇÕES DE NAVEGAÇÃO ===
+# ==========================================
+# 2. FUNÇÕES DE NAVEGAÇÃO
+# ==========================================
 
-def informacoes_partido_button(partido):
-    if st.button('Ver Detalhes', key=f'btn_part_{partido.id}', use_container_width=True):
-        st.session_state['selected_partido'] = PARTIDOS.enrich_with_membros(partido)
-        st.switch_page('pages/pagina_partido.py')
-
-
-def informacoes_deputado_button(deputado):
-    if st.button('Ver Perfil', key=f'btn_dep_{deputado.id}', use_container_width=True):
-        st.session_state['selected_deputado'] = DEPUTADOS.get_by_id(deputado.id)
-        st.switch_page('pages/pagina_deputado.py')
+def ir_para_partido(partido):
+    st.session_state['selected_partido'] = PARTIDOS.enrich_with_membros(partido)
+    st.switch_page('pages/pagina_partido.py')
 
 
-# === TAB: PARTIDOS ===
+def ir_para_deputado(deputado):
+    st.session_state['selected_deputado'] = DEPUTADOS.get_by_id(deputado.id)
+    st.switch_page('pages/pagina_deputado.py')
+
+
+# ==========================================
+# 3. TAB: PARTIDOS
+# ==========================================
 with partidos_tab:
-    st.subheader("Bancadas Partidárias")
+    col_search, col_stats = st.columns([3, 1])
+    with col_search:
+        busca_partido = st.text_input("🔍 Filtrar Partidos", placeholder="Digite a sigla ou nome (ex: PL, PT)...")
 
-    # Filtro de Busca
-    busca_partido = st.text_input("🔍 Buscar Partido (Nome ou Sigla)", placeholder="Ex: PT, PL, Avante...")
-
+    # Recupera dados
     partidos = st.session_state.get('partidos', [])
 
     # Lógica de Filtro
@@ -56,114 +96,133 @@ with partidos_tab:
     else:
         partidos_filtrados = partidos
 
+    # Stats rápidos
+    with col_stats:
+        st.metric("Total de Partidos", len(partidos_filtrados))
+
     if not partidos_filtrados:
-        st.warning("Nenhum partido encontrado.")
+        st.warning("Nenhum partido encontrado com este critério.")
     else:
-        # Layout em Grade (3 colunas)
-        cols = st.columns(3)
-        for index, partido in enumerate(partidos_filtrados):
-            col = cols[index % 3]  # Distribui entre as 3 colunas
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Grid System
+        cols_per_row = 3
+        rows = [partidos_filtrados[i:i + cols_per_row] for i in range(0, len(partidos_filtrados), cols_per_row)]
 
-            with col:
-                # Definindo altura fixa de 200px para alinhar cards
-                with st.container(border=True, height=200):
-                    # Cabeçalho do Card
-                    col_img, col_txt = st.columns([1, 2])
+        for row in rows:
+            cols = st.columns(cols_per_row)
+            for idx, partido in enumerate(row):
+                with cols[idx]:
+                    # Card Container sem altura fixa (deixa o conteúdo ditar)
+                    with st.container(border=True):
+                        c_img, c_info = st.columns([1, 2])
 
-                    logo = partido.url_logo if partido.url_logo else 'https://via.placeholder.com/100'
-                    with col_img:
-                        st.image(logo, width=60)
+                        with c_img:
+                            logo = partido.url_logo if partido.url_logo else 'https://via.placeholder.com/100?text=Sigla'
+                            st.image(logo, use_container_width=True)
 
-                    with col_txt:
-                        st.write(f"**{partido.sigla}**")
-                        st.caption(f"Membros: {partido.status.total_membros}")
+                        with c_info:
+                            st.markdown(f"### {partido.sigla}")
+                            membros = partido.status.total_membros if partido.status else 0
+                            st.markdown(f"<span class='badge-membros'>👥 {membros} Membros</span>",
+                                        unsafe_allow_html=True)
 
-                    st.markdown(f"**{partido.nome}**")
+                        st.markdown(f"**{partido.nome}**")
 
-                    # Tratamento seguro para Líder (pode ser None no dataclass)
-                    nome_lider = partido.status.lider.nome if partido.status and partido.status.lider else "Não informado"
-                    st.caption(f"Líder: {nome_lider}")
+                        lider = partido.status.lider.nome if (partido.status and partido.status.lider) else "—"
+                        st.caption(f"Líder: {lider}")
 
-                    st.divider()
-                    informacoes_partido_button(partido)
+                        if st.button('Ver Detalhes', key=f'btn_part_{partido.id}', use_container_width=True):
+                            ir_para_partido(partido)
 
-# === TAB: DEPUTADOS ===
+# ==========================================
+# 4. TAB: DEPUTADOS
+# ==========================================
 with deputados_tab:
-    st.subheader("Lista de Parlamentares")
-
     deputados = st.session_state.get('deputados', [])
 
-    # --- BARRA DE FILTROS ---
-    with st.expander("🔎 Filtros de Pesquisa", expanded=True):
-        c1, c2, c3 = st.columns([2, 1, 1])
+    # --- BARRA DE FILTROS (Estilo Card) ---
+    with st.container(border=True):
+        st.markdown("#### 🔎 Filtros de Pesquisa")
+        c1, c2, c3 = st.columns([3, 1.5, 1.5])
 
         with c1:
-            busca_nome = st.text_input("Nome do Deputado", placeholder="Digite o nome...")
-
+            busca_nome = st.text_input("Nome do Parlamentar", placeholder="Digite para buscar...")
         with c2:
-            # Extrair lista única de partidos para o selectbox
             lista_partidos = sorted(list(set([d.sigla_partido for d in deputados if d.sigla_partido])))
-            filtro_partido = st.selectbox("Partido", ["Todos"] + lista_partidos)
-
+            filtro_partido = st.selectbox("Filtrar por Partido", ["Todos"] + lista_partidos)
         with c3:
-            # Extrair lista única de UFs
             lista_ufs = sorted(list(set([d.sigla_uf for d in deputados if d.sigla_uf])))
-            filtro_uf = st.selectbox("UF", ["Todos"] + lista_ufs)
+            filtro_uf = st.selectbox("Filtrar por UF", ["Todos"] + lista_ufs)
 
     # Lógica de Filtragem
     deputados_filtrados = deputados
-
     if busca_nome:
         deputados_filtrados = [d for d in deputados_filtrados if busca_nome.lower() in d.nome.lower()]
-
     if filtro_partido != "Todos":
         deputados_filtrados = [d for d in deputados_filtrados if d.sigla_partido == filtro_partido]
-
     if filtro_uf != "Todos":
         deputados_filtrados = [d for d in deputados_filtrados if d.sigla_uf == filtro_uf]
 
-    # --- PAGINAÇÃO (Crucial para performance) ---
-    items_por_pagina = 20
+    # --- PAGINAÇÃO ---
+    st.divider()
+    items_por_pagina = 24  # Múltiplo de 4 para a grade ficar bonita
     total_items = len(deputados_filtrados)
     total_paginas = math.ceil(total_items / items_por_pagina)
 
+    col_resumo, col_pag = st.columns([3, 1])
+    with col_resumo:
+        st.caption(f"Exibindo **{total_items}** parlamentares encontrados.")
+
+    pagina_atual = 1
     if total_paginas > 1:
-        col_pag_1, col_pag_2 = st.columns([4, 1])
-        with col_pag_2:
-            pagina_atual = st.number_input("Página", min_value=1, max_value=total_paginas, value=1)
-    else:
-        pagina_atual = 1
+        with col_pag:
+            pagina_atual = st.number_input(
+                f"Página (1 de {total_paginas})",
+                min_value=1,
+                max_value=total_paginas,
+                value=1,
+                label_visibility="collapsed"
+            )
 
     inicio = (pagina_atual - 1) * items_por_pagina
     fim = inicio + items_por_pagina
     lote_atual = deputados_filtrados[inicio:fim]
 
-    st.caption(f"Mostrando {len(lote_atual)} de {total_items} resultados.")
-
     # --- GRID DE DEPUTADOS ---
     if not lote_atual:
-        st.info("Nenhum deputado encontrado com os filtros atuais.")
+        st.info("🚫 Nenhum deputado encontrado com os filtros selecionados.")
     else:
-        # Grade de 4 colunas
-        cols_dep = st.columns(4)
-        for index, deputado in enumerate(lote_atual):
-            c_dep = cols_dep[index % 4]
+        # Grid System Manual (4 colunas)
+        cols_per_row = 4
+        rows = [lote_atual[i:i + cols_per_row] for i in range(0, len(lote_atual), cols_per_row)]
 
-            with c_dep:
-                # Definindo altura fixa de 370px para alinhar cards (comporta foto + infos)
-                with st.container(border=True, height=370):
-                    # Foto centralizada
-                    if deputado.url_foto:
-                        st.image(deputado.url_foto, use_container_width=True)
+        for row in rows:
+            cols = st.columns(cols_per_row)
+            for idx, deputado in enumerate(row):
+                with cols[idx]:
+                    # Card
+                    with st.container(border=True):
+                        # Cabeçalho do Card (Foto e Status)
+                        c_foto, c_status = st.columns([1, 2])
 
-                    st.markdown(f"##### {deputado.nome}")
+                        # Exibição Condicional de Foto
+                        if deputado.url_foto:
+                            st.image(deputado.url_foto, use_container_width=True)
+                        else:
+                            st.image("https://via.placeholder.com/150?text=Foto", use_container_width=True)
 
-                    # Tags visuais
-                    st.markdown(f"""
-                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                            <span style="background-color: #e0e0e0; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">{deputado.sigla_partido}</span>
-                            <span style="background-color: #d1e7dd; padding: 2px 8px; border-radius: 4px; font-size: 12px;">{deputado.sigla_uf}</span>
+                        # Nome e Partido
+                        st.markdown(f"**{deputado.nome}**")
+
+                        # Badges HTML
+                        html_badges = f"""
+                        <div style='margin-bottom:10px;'>
+                            <span class='badge-partido'>{deputado.sigla_partido}</span>
+                            <span class='badge-uf'>{deputado.sigla_uf}</span>
                         </div>
-                    """, unsafe_allow_html=True)
+                        """
+                        st.markdown(html_badges, unsafe_allow_html=True)
 
-                    informacoes_deputado_button(deputado)
+                        # Botão Full Width
+                        if st.button("Ver Perfil", key=f"btn_d_{deputado.id}", use_container_width=True):
+                            ir_para_deputado(deputado)

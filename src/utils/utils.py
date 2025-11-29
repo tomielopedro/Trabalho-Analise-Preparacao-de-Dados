@@ -61,6 +61,7 @@ class Deputados:
 
     @staticmethod
     def get_historico(deputado_id: int):
+
         return get_deputado_historico(deputado_id)
 
     @staticmethod
