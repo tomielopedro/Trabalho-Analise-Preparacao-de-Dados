@@ -1,6 +1,6 @@
-from utils.utils import all_deputados, all_partidos_detailed
+from utils.utils import Deputados, Partidos
 import streamlit as st
-from datetime import datetime, date
+deputados, partidos = Deputados(), Partidos()
 
 if 'selected_partido' not in st.session_state:
     st.session_state['selected_partido'] = None
@@ -12,10 +12,10 @@ st.session_state['pagina_partido'] = st.Page("pages/pagina_partido.py", title="P
 
 
 if 'deputados' not in st.session_state:
-    st.session_state['deputados'] = all_deputados()
+    st.session_state['deputados'] = deputados.get_all()
 
 if 'partidos' not in st.session_state:
-    st.session_state['partidos'] = all_partidos_detailed()
+    st.session_state['partidos'] = partidos.get_all_detailed()
 
 
 pages = {

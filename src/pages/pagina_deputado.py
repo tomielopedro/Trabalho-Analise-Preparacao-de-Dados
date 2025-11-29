@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date
-from utils.utils import deputado_despesas, deputado_hitorico, tratar_data_historico, deputados_eventos, \
-    interval_years_months
 
+from utils.utils import Deputados, interval_years_months
+
+DEPUTADOS = Deputados()
 # === CSS CUSTOMIZADO PARA ESTILO ===
 st.markdown("""
     <style>
@@ -91,7 +92,7 @@ if deputado:
         else:
             anos, mes = interval_years_months(str(d_ini), str(d_fim))
             # Pega os dados
-            lista_despesas = deputado_despesas(deputado.id, ano=anos, mes=mes)
+            lista_despesas = DEPUTADOS.get_despesas(deputado.id, ano=anos, mes=mes)
 
             if lista_despesas:
                 # Converter para DataFrame do Pandas para facilitar análise
@@ -176,7 +177,7 @@ if deputado:
     # TAB: HISTÓRICO
     # ==========================================
     with tab_historico:
-        historico = deputado_hitorico(deputado.id)
+        historico = DEPUTADOS.get_historico(deputado.id)
         # Inverter para mostrar o mais recente primeiro
         for item in reversed(historico):
             with st.container(border=True):
@@ -194,7 +195,7 @@ if deputado:
         d_ini, d_fim = filtro_data('eventos')
 
         if d_ini <= d_fim:
-            eventos = deputados_eventos(deputado.id, dataInicio=d_ini, dataFim=d_fim)
+            eventos = DEPUTADOS.get_eventos(deputado.id, dataInicio=d_ini, dataFim=d_fim)
 
             if not eventos:
                 st.info("Nenhum evento neste período.")

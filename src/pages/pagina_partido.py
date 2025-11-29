@@ -6,13 +6,17 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from pages.pagina_inicial import informacoes_deputado_button
-from utils.utils import (get_deputado_despesa, get_deputado_historico,
-                         get_deputados_id)
+from utils.utils import Deputados, Partidos
 
+DEPUTADOS, PARTIDOS = Deputados(), Partidos()
+
+def informacoes_deputado_button(deputado):
+    if st.button('Ver Perfil', key=f'btn_dep_{deputado.id}', use_container_width=True):
+        st.session_state['selected_deputado'] = DEPUTADOS.get_by_id(deputado.id)
+        st.switch_page('pages/pagina_deputado.py')
 
 def _buscar_gastos(deputado):
-        df_temp = pd.DataFrame(get_deputado_despesa(deputado_id=deputado.id))
+        df_temp = pd.DataFrame(DEPUTADOS.get_despesas(deputado_id=deputado.id))
         df_temp.insert(0, 'id_deputado', deputado.id)
         return df_temp
 
