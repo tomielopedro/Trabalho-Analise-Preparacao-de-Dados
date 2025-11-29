@@ -93,15 +93,31 @@ if deputado:
 
     # === EVENTOS ===
     with eventos_deputado:
-        st.write(deputados_eventos(deputado.id))
+        for e in deputados_eventos(deputado.id):
+            with st.container(border=True, key=f'container_eventos{e}'):
+                # for para acessar os orgaos
+                for org in e.orgaos:
+                    st.write(f'## {e.dataHoraInicio[:7].replace("-","/")} - *{org.nome}*')
+                    st.write(f"Tipo de Evento **{org.tipoOrgao}**")
+                st.write(f"Descrição **{e.descricao}**")
+                st.write(f"Dia: **{e.dataHoraInicio[8:10]}**")
+                st.write(f"Inicio do Evento: **{e.dataHoraInicio[-5:]}**")
+                st.write(f"Fim do Evento: **{e.dataHoraFim[-5:]}**")
+                st.write(f"Situação: **{e.situacao}**")
+               
+                # Link Para o Video do Plenário
+                html = (f"<div style='text-align:left;'> ▶️ <a href='{e.urlRegistro}' target='_blank'>Acesse o video do Evento</a> &nbsp;&nbsp; </div>")
+                st.markdown(html, unsafe_allow_html=True)
 
 
-
-
+                
+#localCamara
 
     # === PROPOSTAS ===
     with propostas_deputado:
-        st.write('Em construção')
+        st.write(deputados_eventos(deputado.id))
+        
+                        
 
 
 
