@@ -26,10 +26,11 @@ def get_deputados_id(deputado_id: int):
 
 
 
-def get_deputado_despesa(deputado_id: int):
+def get_deputado_despesa(deputado_id: int, **kwargs):
 
     deputados = f'{ENDPOINT}deputados/{deputado_id}/despesas'
-    response = requests.get(deputados)
+
+    response = requests.get(deputados, kwargs)
     if response.status_code == 200:
         return response.json()['dados']
     else:
@@ -47,9 +48,11 @@ def get_deputado_historico(deputado_id: int):
         return []
 
 
-def get_deputados_eventos(deputado_id:int):
+def get_deputados_eventos(deputado_id: int, **kwargs):
     deputados = f'{ENDPOINT}deputados/{deputado_id}/eventos'
-    response = requests.get(deputados)
+    print(kwargs)
+    response = requests.get(deputados, params=kwargs)
+
     if response.status_code == 200:
         return response.json()['dados']
     else:

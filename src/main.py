@@ -1,5 +1,6 @@
 from utils.utils import all_deputados, all_partidos_detailed
 import streamlit as st
+from datetime import datetime, date
 
 if 'selected_partido' not in st.session_state:
     st.session_state['selected_partido'] = None
@@ -9,8 +10,6 @@ if 'selected_deputado' not in st.session_state:
 
 st.session_state['pagina_partido'] = st.Page("pages/pagina_partido.py", title="Pagina Inicial"),
 
-
-#@st.cache_data
 
 if 'deputados' not in st.session_state:
     st.session_state['deputados'] = all_deputados()

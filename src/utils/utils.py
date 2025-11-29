@@ -2,6 +2,40 @@ from service.partidos_service import *
 from service.deputados_service import *
 from models.deputados_models import *
 from models.partidos_models import *
+from datetime import datetime
+
+def interval_years_months(data_inicio: str, data_fim: str):
+    """
+    Gera:
+      anos  -> lista de anos entre as datas
+      meses -> lista de meses SEM repetir
+    """
+
+    inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
+    fim = datetime.strptime(data_fim, "%Y-%m-%d")
+
+    # ----- ANOS -----
+    anos = list(range(inicio.year, fim.year + 1))
+
+    # ----- MESES (sem repetição) -----
+    meses = []
+    seen = set()
+
+    ano = inicio.year
+    mes = inicio.month
+
+    while (ano < fim.year) or (ano == fim.year and mes <= fim.month):
+        if mes not in seen:
+            meses.append(mes)
+            seen.add(mes)
+
+        # avança para o próximo mês
+        mes += 1
+        if mes > 12:
+            mes = 1
+            ano += 1
+
+    return anos, meses
 
 # === DEPUTADOS
 
@@ -15,8 +49,8 @@ def deputado_by_id(deputado_id: int) -> DeputadoDetalhado:
     return DeputadoDetalhado.from_dict(deputado)
 
 
-def deputado_despesas(deputado_id: int) -> Despesa:
-    despesas = get_deputado_despesa(deputado_id)
+def deputado_despesas(deputado_id: int, **kwargs) -> Despesa:
+    despesas = get_deputado_despesa(deputado_id, **kwargs)
     return [Despesa.from_dict(d) for d in despesas]
 
 
@@ -34,6 +68,10 @@ def tratar_data_historico(deputado_id: int):
     anos = [item["dataHora"][:7].replace("-", "/") for item in historico if "dataHora" in item and item["dataHora"]]
     return sorted(anos, reverse=True)
 
+
+def deputados_eventos(deputado_id: int, **kwargs):
+    eventos = get_deputados_eventos(deputado_id, **kwargs)
+    return [Evento.from_dict(evento) for evento in eventos]
 
 
 # === PARTIDOS ===
@@ -67,6 +105,3 @@ def partido_with_membros(partido: Partido) -> Partido:
     return partido
 
 
-def deputados_eventos(deputado_id: int):
-    eventos = get_deputados_eventos(deputado_id)
-    return [Evento.from_dict(evento) for evento in eventos]

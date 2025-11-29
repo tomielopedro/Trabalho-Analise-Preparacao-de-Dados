@@ -1,192 +1,218 @@
-# === BIBLIOTECAS ===
 import streamlit as st
-from dataclasses import asdict
-from utils.utils import deputado_despesas, deputado_hitorico, tratar_data_historico, deputados_eventos
 import pandas as pd
-from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, date
+from utils.utils import deputado_despesas, deputado_hitorico, tratar_data_historico, deputados_eventos, \
+    interval_years_months
+
+# === CSS CUSTOMIZADO PARA ESTILO ===
+st.markdown("""
+    <style>
+    .stMetric {
+        background-color: #f0f2f6;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    .profile-card {
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # === CONFIG ===
-deputado = st.session_state['selected_deputado']
+deputado = st.session_state.get('selected_deputado')
+
 if deputado:
-    # === DEPUTADO ===
-    col1, col2 = st.columns([0.5, 2])
+    # ==========================================
+    # 1. CABEÇALHO (PERFIL)
+    # ==========================================
+    with st.container():
+        col_foto, col_info, col_extra = st.columns([1, 3, 2])
 
-    with col1:
-        # Imagem do Deputado
-        st.image(deputado.ultimo_status.url_foto, width=100)
+        with col_foto:
+            st.image(deputado.ultimo_status.url_foto, width=150)
 
-    with col2:
-        # Info Basica do Deputado
-        st.write(f'## {deputado.nome}')
-        st.write(f"### Partido ***{deputado.ultimo_status.sigla_partido}***")
-        st.write(f"### Estado {deputado.ultimo_status.sigla_uf}")
+        with col_info:
+            st.title(deputado.nome)
+            st.markdown(f"### {deputado.ultimo_status.sigla_partido} - {deputado.ultimo_status.sigla_uf}")
 
-        # Redes Sociais !!!!!!
-        with st.container(border=False, key='container_redes'):
-                html = "<div style='text-align:left;'>"
-                for redes in deputado.rede_social:
-                    if 'twitter' in redes:
-                        html += f"🐦 <a href='{redes}' target='_blank'>Twitter</a> &nbsp;&nbsp;"
-                    elif 'facebook' in redes:
-                        html += f"📘 <a href='{redes}' target='_blank'>Facebook</a> &nbsp;&nbsp;"
-                    elif 'instagram' in redes:
-                        html += f"📷 <a href='{redes}' target='_blank'>Instagram</a> &nbsp;&nbsp;"
-                    elif 'youtube' in redes:
-                        html += f"▶️ <a href='{redes}' target='_blank'>YouTube</a> &nbsp;&nbsp;"
-                html += "</div>"
+            # Status badge
+            situacao_cor = "green" if "Exercício" in str(deputado.ultimo_status.situacao) else "orange"
+            st.markdown(
+                f":{situacao_cor}[●] **{deputado.ultimo_status.situacao}** | {deputado.ultimo_status.condicao_eleitoral}")
 
-                st.markdown(html, unsafe_allow_html=True)
+        with col_extra:
+            st.markdown("##### Contato & Redes")
 
-    # Tabs para Seleção
-    tabs = ['Informações', 'Histórioco', 'Eventos', 'Propostas', 'Despesas']
-    info_deputado, historico_deputado, eventos_deputado, propostas_deputado, despesas_deputado = st.tabs(tabs)
+            cols_redes = st.columns(4)
+            icon_map = {'twitter': '🐦', 'facebook': '📘', 'instagram': '📷', 'youtube': '▶️'}
 
+            for i, rede in enumerate(deputado.rede_social[:4]):
+                nome_rede = next((k for k in icon_map if k in rede), '🔗')
+                icone = icon_map.get(nome_rede, '🔗')
+                with cols_redes[i]:
+                    st.link_button(icone, rede)
 
+            st.caption(f"📧 {deputado.ultimo_status.gabinete.email}")
 
-    # === INFORMAÇÃOES BASICAS ===
-    with info_deputado:
+    st.divider()
 
-        # Dados Politicos
-        with st.container(border=True, key='container_Dados'):
-            st.markdown(f"### Dados Politicos")
-            st.markdown(f"Id do Deputado: ***{deputado.ultimo_status.id}***")
-            st.markdown(f"Situação Eleitoral ***{deputado.ultimo_status.situacao}***")
-            st.markdown(f"Condição ***{deputado.ultimo_status.condicao_eleitoral}***")
-            st.markdown(f"Id da Legislatura: ***{deputado.ultimo_status.id_legislatura}***")
-
-         # Gabinete
-        with st.container(border=True, key='container_Gabinete'):
-            st.markdown(f"### Gabinete")
-            st.write(f"Gabinete do Deputado: {deputado.ultimo_status.gabinete.nome}°")
-            st.write(f"Predio: {deputado.ultimo_status.gabinete.predio}°")
-            # Contato
-            st.markdown(f"Telefone para Contato: ***{deputado.ultimo_status.gabinete.telefone}***")
-            st.markdown(f"Email para Contato: *{deputado.ultimo_status.gabinete.email}*")
-
-        # Dados Pessoais
-        with st.container(border=True, key='container_Dados_Pessoais'):
-            st.markdown(f"### Dados Pessoais")
-            st.markdown(f"CPF: ***{deputado.cpf}***")
-            st.markdown(f"Nivel de Escolaridade: **{deputado.escolaridade}**")
-            st.markdown(f"Estado de Nascimento: {deputado.uf_nascimento}")
-            st.markdown(f"Municipio de Nascimento: **{deputado.municipio_nascimento}**")
-            st.markdown(f"Data de Nascimento: {datetime.strptime(deputado.data_nascimento, '%Y-%m-%d').strftime('%d/%m/%Y')}")
+    # ==========================================
+    # 2. TABS DE CONTEÚDO
+    # ==========================================
+    tabs = ['🏛️ Informações', '📊 Dashboard & Despesas', '📜 Histórico', '📅 Eventos']
+    tab_info, tab_despesas,  tab_historico, tab_eventos = st.tabs(tabs)
 
 
+    # --- FUNÇÃO HELPER PARA FILTRO DE DATA ---
+    def filtro_data(key_suffix):
+        hoje = date.today()
+        inicio_ano = date(hoje.year, 1, 1)
 
-    # === HISTÓRICO ===
-    with historico_deputado:
-        # Config da Tab
+        c1, c2 = st.columns(2)
+        with c1:
+            d_ini = st.date_input('📅 Data Inicial', value=inicio_ano, format='DD/MM/YYYY', key=f'ini_{key_suffix}')
+        with c2:
+            d_fim = st.date_input('📅 Data Final', value=hoje, format='DD/MM/YYYY', key=f'fim_{key_suffix}')
+        return d_ini, d_fim
+
+
+    # ==========================================
+    # TAB: DESPESAS
+    # ==========================================
+    with tab_despesas:
+        st.subheader("Transparência e Gastos")
+        d_ini, d_fim = filtro_data('despesas')
+
+        if d_ini > d_fim:
+            st.error('A data inicial deve ser menor que a final')
+        else:
+            anos, mes = interval_years_months(str(d_ini), str(d_fim))
+            # Pega os dados
+            lista_despesas = deputado_despesas(deputado.id, ano=anos, mes=mes)
+
+            if lista_despesas:
+                # Converter para DataFrame do Pandas para facilitar análise
+                data_dicts = [
+                    {
+                        "Data": f"{d.ano}-{d.mes:02d}-01",
+                        "Ano": d.ano,
+                        "Mês": d.mes,
+                        "Tipo": d.tipo_despesa,
+                        "Fornecedor": d.nome_fornecedor,
+                        "Valor": d.valor_liquido,
+                        "Documento": d.url_documento
+                    }
+                    for d in lista_despesas
+                ]
+                df = pd.DataFrame(data_dicts)
+                df['Data'] = pd.to_datetime(df['Data'])
+
+                # --- KPIs ---
+                kpi1, kpi2, kpi3 = st.columns(3)
+                kpi1.metric("Total Gasto no Período", f"R$ {df['Valor'].sum():,.2f}")
+                kpi2.metric("Média por Gasto", f"R$ {df['Valor'].mean():,.2f}")
+                kpi3.metric("Maior Gasto Único", f"R$ {df['Valor'].max():,.2f}")
+
+                st.divider()
+
+                # --- GRÁFICOS ---
+                g1, g2 = st.columns(2)
+
+                with g1:
+                    st.markdown("##### Gastos por Categoria")
+                    # Agrupar por tipo
+                    df_tipo = df.groupby("Tipo")["Valor"].sum().sort_values(ascending=True)
+                    st.bar_chart(df_tipo, color="#ff4b4b", horizontal=True)
+
+                with g2:
+                    st.markdown("##### Evolução Temporal")
+                    df_tempo = df.groupby("Data")["Valor"].sum()
+                    st.line_chart(df_tempo)
+
+                st.markdown("##### Detalhamento das Despesas")
+
+                st.dataframe(
+                    df[['Ano', 'Mês', 'Tipo', 'Fornecedor', 'Valor', 'Documento']],
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Valor": st.column_config.NumberColumn(
+                            "Valor (R$)", format="R$ %.2f"
+                        ),
+                        "Documento": st.column_config.LinkColumn(
+                            "Nota Fiscal", display_text="Abrir NF"
+                        )
+                    }
+                )
+            else:
+                st.info("Nenhuma despesa encontrada para o período selecionado.")
+
+    # ==========================================
+    # TAB: INFORMAÇÕES
+    # ==========================================
+    with tab_info:
+        c1, c2 = st.columns(2)
+
+        with c1:
+            with st.container(border=True):
+                st.markdown("#### 🏛️ Dados Políticos")
+                st.write(f"**ID Legislatura:** {deputado.ultimo_status.id_legislatura}")
+                st.write(
+                    f"**Gabinete:** {deputado.ultimo_status.gabinete.nome} - Prédio {deputado.ultimo_status.gabinete.predio}")
+                st.write(f"**Telefone:** {deputado.ultimo_status.gabinete.telefone}")
+
+        with c2:
+            with st.container(border=True):
+                st.markdown("#### 👤 Dados Pessoais")
+                dt_nasc = datetime.strptime(deputado.data_nascimento, '%Y-%m-%d').strftime('%d/%m/%Y')
+                st.write(f"**Nascimento:** {dt_nasc} ({deputado.uf_nascimento})")
+                st.write(f"**Escolaridade:** {deputado.escolaridade}")
+                st.write(f"**CPF:** {deputado.cpf[:3]}.***.***-**")
+
+    # ==========================================
+    # TAB: HISTÓRICO
+    # ==========================================
+    with tab_historico:
         historico = deputado_hitorico(deputado.id)
-        ano = tratar_data_historico(deputado.id)
+        # Inverter para mostrar o mais recente primeiro
+        for item in reversed(historico):
+            with st.container(border=True):
+                col_ano, col_desc = st.columns([1, 4])
+                with col_ano:
+                    st.markdown(f"### {item.get('ano', '????')}")
+                with col_desc:
+                    st.markdown(f"**{item.get('siglaPartido')}** - {item.get('situacao')}")
+                    st.caption(item.get('descricaoStatus'))
 
-        for i in range(len(ano)):   # Incrementar
-            with st.container(border=True, key=f'container_historico{i}'):
-                st.write(f"### Ano {ano[i]}")
-                st.write(f'Situação: {historico[i]["situacao"] if historico[i]["situacao"] else "---"}')
-                st.write(f'Status: {historico[i]["condicaoEleitoral"] if historico[i]["condicaoEleitoral"] else "---"}')
-                st.write(f'Partido: {historico[i]["siglaPartido"] if historico[i]["siglaPartido"] else "---"}')
-                st.write(f'Descrição: {historico[i]["descricaoStatus"] if historico[i]["descricaoStatus"] else "---"}')
+    # ==========================================
+    # TAB: EVENTOS
+    # ==========================================
+    with tab_eventos:
+        d_ini, d_fim = filtro_data('eventos')
 
+        if d_ini <= d_fim:
+            eventos = deputados_eventos(deputado.id, dataInicio=d_ini, dataFim=d_fim)
 
+            if not eventos:
+                st.info("Nenhum evento neste período.")
 
-    # === EVENTOS ===
-    with eventos_deputado:
-        for e in deputados_eventos(deputado.id):
-            with st.container(border=True, key=f'container_eventos{e}'):
-                # for para acessar os orgaos
-                for org in e.orgaos:
-                    st.write(f'## {e.dataHoraInicio[:7].replace("-","/")} - *{org.nome}*')
-                    st.write(f"Tipo de Evento **{org.tipoOrgao}**")
-                st.write(f"Descrição **{e.descricao}**")
-                st.write(f"Dia: **{e.dataHoraInicio[8:10]}**")
-                st.write(f"Inicio do Evento: **{e.dataHoraInicio[-5:]}**")
-                st.write(f"Fim do Evento: **{e.dataHoraFim[-5:]}**")
-                st.write(f"Situação: **{e.situacao}**")
-               
-                # Link Para o Video do Plenário
-                html = (f"<div style='text-align:left;'> ▶️ <a href='{e.urlRegistro}' target='_blank'>Acesse o video do Evento</a> &nbsp;&nbsp; </div>")
-                st.markdown(html, unsafe_allow_html=True)
+            for e in eventos:
 
+                data_formatada = f"{e.dataHoraInicio[8:10]}/{e.dataHoraInicio[5:7]} - {e.dataHoraInicio[11:16]}"
 
-                
-#localCamara
+                with st.expander(f"🗓️ {data_formatada} | {e.descricaoTipo}"):
+                    st.write(f"**Descrição:** {e.descricao}")
+                    st.write(f"**Situação:** {e.situacao}")
 
-    # === PROPOSTAS ===
-    with propostas_deputado:
-        st.write(deputados_eventos(deputado.id))
-        
-                        
+                    if e.orgaos:
+                        st.markdown("**Órgãos envolvidos:**")
+                        for org in e.orgaos:
+                            st.code(f"{org.sigla} - {org.nome}")
 
-
-
-
-    # === DESPESAS ===
-    with despesas_deputado:
-        # Ordenar a Lista de Objetos do tipo Despesa
-        despesa = sorted(deputado_despesas(deputado.id), key=lambda d: (d.ano, d.mes), reverse=True)
-
-        # Criar Tabs para Janelas de Gastos
-        tabs_gasto = ['Geral', 'Específico']
-        gasto_geral, gasto_especifico = st.tabs(tabs_gasto)
-
-        # Gastos Geral Por tipo e Data
-        with gasto_geral:
-            # Obter todos os anos disponíveis nas despesas
-            anos_disponiveis = sorted({d.ano for d in despesa}, reverse=True)
-            ano_selecionado = st.selectbox("Selecione o ano:", ["Todos"] + anos_disponiveis) # Select Box
-
-            if ano_selecionado == "Todos":
-                despesas_filtradas = despesa
-            else:
-                despesas_filtradas = [d for d in despesa if d.ano == ano_selecionado]
-
-            # Agrupa os Gastos Por Tipo
-            agrupado = defaultdict(list)
-            for d in despesa:
-                agrupado[d.tipo_despesa].append(d)
-
-
-            st.write(f"## Gastos {'(Todos os anos)' if ano_selecionado == 'Todos' else f'de {ano_selecionado}'}")
-
-            if not despesas_filtradas:
-                st.warning("Nenhuma despesa encontrada para o filtro selecionado.")
-            else:
-                for tipo, lista in agrupado.items():
-                    with st.container(border=True, key=f'container_Despesa_total_{tipo}_{ano_selecionado}'):
-                        total = sum(d.valor_liquido for d in lista)
-                        st.write(f"### {tipo}")
-                        st.write(f"Total gasto: R$ {total:.2f}")
-                        st.write(f"Número de compras: {len(lista)}")
-                        st.write(f"Valor médio por gasto: R$ {(total / len(lista)):.2f}")
-
-
-
-        # Gastos Especificos Detalhados
-        with gasto_especifico:
-            # Loop para mostrar todas as despesas
-            for i, des in enumerate(despesa):
-                # Cria o Container Geral da Página
-                with st.container(border=True, key=f'container_despesa{i}'):
-
-                    # Colunas Internas das Despesas
-                    col_despesa_1, col_despesa_2 = st.columns([2, 1])
-
-                    with col_despesa_1:
-                        # Despesas
-                        st.write(f"## Ano {des.ano}/{des.mes}")
-                        st.write(f'### {des.tipo_despesa.title()}')
-                        st.write(f"Valor da Compra **R${des.valor_documento}**")
-                        st.markdown(f"Acesse a NF clicando aqui [*Nota Fiscal*]({des.url_documento})")
-
-                    with col_despesa_2:
-                        # Container interno do Vendedor
-                        with st.container(border=True, key=f'container_despesa_Vendedor{i}'):
-                            # Info Basica do Vendedor
-                            st.write(f'***{des.nome_fornecedor}***')
-                            st.write(f"CNPJ *{des.cnpj_cpf_fornecedor}*")
-                            st.write(f"Cod do Lot. **{des.cod_lote}**")
-                            st.write(f"A compra foi feita em  *{des.parcela}* vezes.")
+                    if e.urlRegistro:
+                        st.link_button("▶️ Assistir Vídeo / Ver Registro", e.urlRegistro)
 else:
-    st.warning('Nenhum deputado encontrado')
+    st.warning('⚠️ Selecione um deputado na página anterior para visualizar os dados.')
