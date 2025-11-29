@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from pages.pagina_deputado import filtro_data
 from utils.utils import Deputados, Partidos
 
 DEPUTADOS, PARTIDOS = Deputados(), Partidos()
@@ -45,8 +46,8 @@ if partido:
 
     st.title(partido.nome)
 
-    tabs = ['Informações do Partido', 'Deputados', 'Gastos', 'Propostas', 'Eventos']
-    info_partido, deputados_partido, gastos_partido, prospostas_partido, eventos_partido = st.tabs(tabs)
+    tabs = ['Informações do Partido', 'Deputados', 'Gastos', 'Eventos']
+    info_partido, deputados_partido, gastos_partido, eventos_partido = st.tabs(tabs)
 
     with info_partido:
         status = infos["status"]
@@ -100,22 +101,22 @@ if partido:
             st.info("Este partido não possui membros na lista.")
 
     with gastos_partido:
-        valor_total = st.session_state['gastos_partido']["valorLiquido"].sum()
+        valor_total = st.session_state['gastos_partido']["valor_liquido"].sum()
         valor_total_str = f'{valor_total:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
         st.write(f'## Valor Total: R${valor_total_str}')
         st.divider()
 
         # GASTOS POR TIPO - GRÁFICO DE PIZZA
         gastos_por_tipo = (
-            st.session_state['gastos_partido'].groupby("tipoDespesa")["valorLiquido"]
+            st.session_state['gastos_partido'].groupby("tipo_despesa")["valor_liquido"]
             .sum()
             .reset_index()
-            .sort_values(by="valorLiquido", ascending=False)
+            .sort_values(by="valor_liquido", ascending=False)
         )
         fig1 = px.pie(
             gastos_por_tipo,
-            values="valorLiquido",
-            names="tipoDespesa",
+            values="valor_liquido",
+            names="tipo_despesa",
             title="Distribuição percentual dos gastos por tipo de despesa",
             hole=0,
         )
@@ -125,7 +126,7 @@ if partido:
 
         # GASTOS MENSAIS - GRÁFICO DE LINHA
         gastos_mensais = (
-            st.session_state['gastos_partido'].groupby(["ano", "mes"])["valorLiquido"]
+            st.session_state['gastos_partido'].groupby(["ano", "mes"])["valor_liquido"]
             .sum()
             .reset_index()
         )
@@ -136,9 +137,9 @@ if partido:
         fig2 = px.line(
             gastos_mensais,
             x="data",
-            y="valorLiquido",
+            y="valor_liquido",
             title="Evolução mensal dos gastos do partido",
-            labels={"valorLiquido": "Valor total (R$)", "data": "Mês"},
+            labels={"valor_liquido": "Valor total (R$)", "data": "Mês"},
             markers=True
         )
         st.plotly_chart(fig2, use_container_width=True)
@@ -146,46 +147,77 @@ if partido:
 
         # GASTOS POR DEPUTADO - GRÁFICO DE BARRA
         gasto_por_deputado = (
-            st.session_state['gastos_partido'].groupby("id_deputado")["valorLiquido"]
+            st.session_state['gastos_partido'].groupby("id_deputado")["valor_liquido"]
             .sum()
             .reset_index()
-        ).sort_values("valorLiquido", ascending=True)
+        ).sort_values("valor_liquido", ascending=True)
         gasto_por_deputado["nome"] = gasto_por_deputado["id_deputado"].map({d.id: d.nome for d in partido.membros})
         fig3 = px.bar(
             gasto_por_deputado,
-            x="valorLiquido",
+            x="valor_liquido",
             y="nome",
             orientation="h",
             title="Total gasto por deputado",
-            labels={"valorLiquido": "Valor total (R$)", "nome": "Deputado"},
+            labels={"valor_liquido": "Valor total (R$)", "nome": "Deputado"},
         )
         st.plotly_chart(fig3, use_container_width=True)
         st.divider()
 
         # GASTOS POR FORNECEDOR - GRÁFICO DE BARRA
         fornecedores = (
-            st.session_state['gastos_partido'].groupby("nomeFornecedor")["valorLiquido"]
+            st.session_state['gastos_partido'].groupby("nome_fornecedor")["valor_liquido"]
             .sum()
             .reset_index()
-            .sort_values("valorLiquido", ascending=False)
+            .sort_values("valor_liquido", ascending=False)
             .head(10)
-        ).sort_values('valorLiquido')
+        ).sort_values('valor_liquido')
         fig4 = px.bar(
             fornecedores,
-            x="valorLiquido",
-            y="nomeFornecedor",
+            x="valor_liquido",
+            y="nome_fornecedor",
             orientation="h",
             title="Top 10 Fornecedores mais Pagos",
-            labels={"valorLiquido": "Valor total (R$)", "nomeFornecedor": "Fornecedor"},
+            labels={"valor_liquido": "Valor total (R$)", "nome_fornecedor": "Fornecedor"},
         )
         st.plotly_chart(fig4, use_container_width=True)
         st.divider()
 
-    with prospostas_partido:
-        st.write('Em construção')
-
     with eventos_partido:
-        st.write('Em construção')
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            d_ini, d_fim = filtro_data('eventos')
+        with c2:
+            nome_deputado_filtro = st.selectbox(
+                label='👤 Deputado', 
+                options=partido.membros,
+                format_func=lambda x: x.nome,
+                index=None,
+                placeholder='Selecione um deputado'
+            )
+        if d_ini <= d_fim:
+            if nome_deputado_filtro is None:
+                list_eventos = dict()
+                for deputado in partido.membros:
+                    eventos = DEPUTADOS.get_eventos(deputado.id, dataInicio=d_ini, dataFim=d_fim)
+                    list_eventos[deputado.nome] = eventos
+            else:
+                list_eventos = dict() 
+                eventos = DEPUTADOS.get_eventos(nome_deputado_filtro.id, dataInicio=d_ini, dataFim=d_fim)
+                list_eventos[nome_deputado_filtro.nome] = eventos
+            if list_eventos:
+                for d, eventos in list_eventos.items():
+                    for e in eventos:
+                        data_fmt = f"{e.dataHoraInicio[8:10]}/{e.dataHoraInicio[5:7]} às {e.dataHoraInicio[11:16]}"
+                        with st.expander(f"🗓️ {data_fmt} | {e.descricaoTipo} | {d}"):
+                            st.write(e.descricao)
+                            if e.localExterno:
+                                st.caption(f"📍 Local: {e.localExterno}")
+                            if e.urlRegistro:
+                                st.link_button("Ver Registro / Vídeo", e.urlRegistro)
+            else:
+                st.warning('Nenhum evento encontrado.')
+
+
 else:
     st.warning('Nenhum partido selecionado')
 
