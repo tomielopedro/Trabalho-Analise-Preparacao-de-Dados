@@ -8,7 +8,8 @@ from utils.utils import Deputados, interval_years_months
 # ==========================================
 # 0. CONFIGURAÇÃO E ESTILO
 # ==========================================
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ICON_DIR = os.path.join(BASE_DIR, "assets", "images")
 st.set_page_config(layout="wide", page_title="Portal Parlamentar - Deputados", page_icon="🏛️")
 
 
@@ -142,10 +143,10 @@ if deputado:
             st.markdown("##### 🌐 Redes Sociais")
 
             icon_map = {
-                'twitter': 'assets/images/x.png',
-                'facebook': 'assets/images/facebook.png',
-                'instagram': 'assets/images/instagram.png',
-                'youtube': 'assets/images/youtube.png'
+                'twitter': './assets/images/x.png',
+                'facebook': './assets/images/facebook.png',
+                'instagram': './assets/images/instagram.png',
+                'youtube': './assets/images/youtube.png'
             }
 
             html_icons = ""
