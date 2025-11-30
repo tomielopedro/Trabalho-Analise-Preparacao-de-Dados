@@ -8,8 +8,7 @@ from utils.utils import Deputados, interval_years_months
 # ==========================================
 # 0. CONFIGURAÇÃO E ESTILO
 # ==========================================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ICON_DIR = os.path.join(BASE_DIR, "assets", "images")
+
 st.set_page_config(layout="wide", page_title="Portal Parlamentar - Deputados", page_icon="🏛️")
 
 
@@ -69,7 +68,14 @@ def get_img_as_base64(file_path):
         data = f.read()
     return base64.b64encode(data).decode()
 
-
+def local_asset_path(filename):
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),  # pasta da página
+        "..",                                        # sobe 1 nível -> src/pages → src
+        "assets",
+        "images",
+        filename
+    )
 def render_social_icon(url, icon_path, alt_text):
     """Renderiza ícone social ou fallback textual"""
     img_b64 = get_img_as_base64(icon_path)
@@ -143,10 +149,10 @@ if deputado:
             st.markdown("##### 🌐 Redes Sociais")
 
             icon_map = {
-                'twitter': './assets/images/x.png',
-                'facebook': './assets/images/facebook.png',
-                'instagram': './assets/images/instagram.png',
-                'youtube': './assets/images/youtube.png'
+                'twitter': local_asset_path("x.png"),
+                'facebook': local_asset_path("facebook.png"),
+                'instagram': local_asset_path("instagram.png"),
+                'youtube': local_asset_path("youtube.png")
             }
 
             html_icons = ""
