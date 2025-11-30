@@ -170,7 +170,7 @@ if partido:
         st.markdown('</div>', unsafe_allow_html=True)
 
     # --- TABS ---
-    tabs = st.tabs(['📊 Dashboard Financeiro', '👥 Bancada (Deputados)', '🗓️ Agenda & Eventos'])
+    tabs = st.tabs(['Dashboard Financeiro', 'Bancada (Deputados)', 'Agenda & Eventos'])
 
     # ---------------------------------------------------------------------
     # TAB 1: GASTOS (DASHBOARD)

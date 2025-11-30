@@ -1,7 +1,7 @@
 from utils.utils import Deputados, Partidos
 import streamlit as st
 deputados, partidos = Deputados(), Partidos()
-
+st.set_page_config(layout="wide", page_title="Portal Parlamentar", page_icon="🏛️", initial_sidebar_state="collapsed")
 if 'selected_partido' not in st.session_state:
     st.session_state['selected_partido'] = None
 

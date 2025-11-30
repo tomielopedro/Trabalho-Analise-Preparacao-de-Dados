@@ -50,7 +50,6 @@ def get_deputado_historico(deputado_id: int):
 
 def get_deputados_eventos(deputado_id: int, **kwargs):
     deputados = f'{ENDPOINT}deputados/{deputado_id}/eventos'
-    print(kwargs)
     response = requests.get(deputados, params=kwargs)
 
     if response.status_code == 200:
@@ -59,5 +58,3 @@ def get_deputados_eventos(deputado_id: int, **kwargs):
         print(f"Erro na requisição: {response.status_code}")
         return []
 
-if __name__ == '__main__':
-    print(get_deputados_eventos(91228))

@@ -9,7 +9,7 @@ from utils.utils import Deputados, interval_years_months
 # 0. CONFIGURAÇÃO E ESTILO
 # ==========================================
 
-st.set_page_config(layout="wide", page_title="Portal Parlamentar", page_icon="🏛️")
+st.set_page_config(layout="wide", page_title="Portal Parlamentar - Deputados", page_icon="🏛️")
 
 
 DEPUTADOS = Deputados()

@@ -3,6 +3,7 @@ import math
 from utils.utils import Deputados, Partidos
 
 DEPUTADOS, PARTIDOS = Deputados(), Partidos()
+st.set_page_config(layout="wide", page_title="Portal Parlamentar", page_icon="🏛️", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
@@ -51,11 +52,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗂️ Visão Geral Parlamentar")
+st.title("Portal Parlamentar")
 st.markdown("Explore as bancadas partidárias e a lista completa de deputados em exercício.")
 st.markdown("---")
 
-partidos_tab, deputados_tab = st.tabs(['🏢 Partidos Políticos', '👔 Deputados Federais'])
+partidos_tab, deputados_tab = st.tabs(['Partidos Políticos', 'Deputados Federais'])
 
 
 def ir_para_partido(partido):
@@ -74,7 +75,7 @@ def ir_para_deputado(deputado):
 with partidos_tab:
     col_search, col_stats = st.columns([3, 1])
     with col_search:
-        busca_partido = st.text_input("🔍 Filtrar Partidos", placeholder="Digite a sigla ou nome (ex: PL, PT)...")
+        busca_partido = st.text_input("Filtrar Partidos", placeholder="Digite a sigla ou nome (ex: PL, PT)...")
 
     partidos = st.session_state.get('partidos', [])
 
