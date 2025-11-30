@@ -62,8 +62,9 @@ DEPUTADOS, PARTIDOS = Deputados(), Partidos()
 # 1. FUNÇÕES LÓGICAS
 # ==========================================
 
-def informacoes_deputado_button(deputado):
-    if st.button('Ver Perfil', key=f'btn_dep_{deputado.id}', use_container_width=True):
+def informacoes_deputado_button(deputado, prefix=None):
+    btn_key = f'btn_dep_{prefix}_{deputado.id}'
+    if st.button('Ver Perfil', key=btn_key, use_container_width=True):
         st.session_state['selected_deputado'] = DEPUTADOS.get_by_id(deputado.id)
         st.switch_page('pages/pagina_deputado.py')
 
@@ -308,7 +309,7 @@ if partido:
         st.divider()
 
         if membros_filtrados:
-            for deputado in membros_filtrados:
+            for i, deputado in enumerate(membros_filtrados):
                 with st.container(border=True):
                     col1, col2, col3 = st.columns([0.5, 3, 1])
                     with col1:
@@ -318,7 +319,7 @@ if partido:
                         st.markdown(f"**UF:** {deputado.sigla_uf}")
                     with col3:
                         st.markdown("<br>", unsafe_allow_html=True)
-                        informacoes_deputado_button(deputado)
+                        informacoes_deputado_button(deputado, i)
         elif search_name:
             st.warning("⚠️ Nenhum deputado encontrado com esse nome.")
         else:
